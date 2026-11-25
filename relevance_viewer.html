@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Layerwise — Transformer × Mamba-2</title>
+<style>
+:root{color-scheme:light;--font-ui:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;--paper:#f5f6f8;--ink:#202b3b;--muted:#657184;--line:#e1e6ec;--blue:#315dbb;--transformer-curve:#1643a0;--mamba-curve:#a61466;--cell:22px;--row:23px}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.7 var(--font-ui)}button,select,input{font:inherit}button,select{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid #8caff8;outline-offset:3px}button:disabled{cursor:default}main{max-width:1680px;margin:auto;padding:28px 40px 48px}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:21px;gap:16px}.brand{font-weight:750;font-size:23px;letter-spacing:-1px}.brand span{color:var(--blue)}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted)}.prompt-card{margin-top:20px}.example-control{padding-bottom:16px}.example-control select{display:block;width:100%;max-width:none;margin-top:5px;text-overflow:ellipsis}.button{border:1px solid #cbd4e0;background:#fff;color:var(--ink);padding:8px 14px;border-radius:7px;font-size:12px}.card{border:1px solid var(--line);border-radius:11px;background:#fff}.prompt-card{padding:21px 25px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center}.field-label{font-size:10px;font-weight:750;color:var(--muted);letter-spacing:1px}.context,.question{font-size:18px}.context{margin:5px 0 11px;white-space:pre-wrap}.question{margin:4px 0}.answer-card{border-left:1px solid var(--line);padding-left:32px;min-width:150px;max-width:clamp(150px,28vw,340px)}.answer{font-size:30px;font-weight:700;margin:3px 0;color:var(--blue);overflow-wrap:anywhere}.tag{display:inline-block;background:#edf2fa;color:#486181;font-size:10px;border-radius:4px;padding:2px 7px;vertical-align:middle}.subtle{color:var(--muted);font-size:12px}.controls{margin:20px 0 14px;padding:15px 20px;display:flex;flex-wrap:wrap;align-items:end;gap:15px 22px}.control{display:flex;flex-direction:column;gap:5px}.control label{font-size:11px;color:var(--muted);font-weight:600}.segments{display:flex;gap:3px;background:#f0f2f6;padding:3px;border-radius:7px}.segments button{border:0;background:transparent;color:#8a93a1;padding:6px 13px;font-size:12px;border-radius:5px}.segments .active{background:white;color:var(--blue);box-shadow:0 1px 3px #192d4a13;font-weight:700}.segments small{font-size:9px;margin-left:3px}select{border:1px solid var(--line);background:white;color:var(--ink);border-radius:6px;padding:7px 28px 7px 9px;font-size:12px;max-width:330px}.columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}.model-card{min-width:0;overflow:hidden}.model-head{padding:19px 21px 15px;border-bottom:1px solid var(--line);background:linear-gradient(120deg,#f5f8ff,white)}.model-head.mamba{background:linear-gradient(120deg,#eef8f5,white)}.model-name{display:flex;justify-content:space-between;align-items:center;gap:10px}.model-name h2{font-size:19px;margin:0;letter-spacing:-.4px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--transformer-curve);margin-right:9px}.mamba .dot{background:var(--mamba-curve)}.layer-count{font-size:11px;font-weight:650;color:var(--muted);white-space:nowrap}.model-id{font:10px/1.5 ui-monospace,SFMono-Regular,monospace;color:var(--muted);overflow-wrap:anywhere;margin-top:5px}.generation{font-size:12px;margin-top:10px;min-height:28px;white-space:pre-wrap;overflow-wrap:anywhere}.status{font-size:10px;border-radius:4px;padding:2px 6px;margin-left:7px;background:#eef6f0;color:#34724a}.status.different{background:#fff3dd;color:#865b11}.map-scroll{overflow:auto;max-height:none;scrollbar-width:thin}.map{padding:0 14px 17px;width:max-content;min-width:100%}.axis{display:flex;align-items:end}.axis-token{width:var(--cell);flex:none;height:15px;position:relative}.axis-token .axis-label{font-size:10px;white-space:pre;position:absolute;transform:rotate(-55deg);transform-origin:0 100%;bottom:7px;left:7px}.layer-row{display:flex;align-items:center;height:var(--row);gap:0;position:relative;border-radius:3px}.layer-label{flex:0 0 var(--layer-gutter);text-align:right;padding-right:5px;font:10px ui-monospace,monospace;color:#68758a;white-space:nowrap}.layer-row.gap{cursor:default}.gap .layer-label{color:#c3cad5}.gap-line{height:1px;background:#edf0f4;flex:1}.input-row{margin-bottom:7px;border-bottom:1px solid var(--line);border-radius:0}.legend{display:flex;align-items:center;gap:7px;white-space:nowrap}details summary{cursor:pointer;font-weight:650;color:var(--ink)}details p{margin:12px 0 0}#error{padding:20px;color:#9d2636;background:#fff0f0}.noscript{margin:20px;padding:20px}.prompt-details{margin-top:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}.match-note{font-size:11px;margin-top:10px;color:#865b11}.hidden{display:none!important}
+.columns{grid-template-rows:auto auto;row-gap:0}.model-card{display:grid;grid-template-rows:subgrid;grid-row:span 2}.layer-label{position:sticky;left:0;background:white;z-index:1}
+.example-control{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:8px 14px}
+.example-control label{min-width:0}
+.columns:has(> .logit-card) > .model-card{grid-row:span 1}
+@media(max-width:560px){.example-control{grid-template-columns:1fr}}
+@media(max-width:900px){main{padding:20px 16px}.columns{column-gap:10px}.model-head{padding:13px}.model-name h2{font-size:16px}.prompt-card{padding:17px;gap:12px}.answer-card{padding-left:17px;min-width:110px}.context,.question{font-size:15px}.controls{gap:11px;padding:12px}}
+@media(max-width:660px){.prompt-card{grid-template-columns:minmax(0,1fr)}.answer-card{border-left:0;border-top:1px solid var(--line);padding:10px 0 0;max-width:none}.answer{font-size:23px}}
+@media(max-width:560px){.eyebrow{font-size:8px;letter-spacing:1px}.model-name{align-items:start;flex-direction:column;gap:1px}.model-id{font-size:8px}.generation{min-height:68px}select{max-width:270px}header .button{font-size:10px;padding:7px 9px}}
+.context mark,.answer-axis-label{background:#ffe39a;color:#392b14;border-radius:2px}
+
+
+.overlay-card{grid-column:1/-1;min-width:0;overflow:hidden;margin-top:14px}
+.distribution-help{padding:10px 14px;border-bottom:1px solid var(--line)}
+.distribution-help p{max-width:76ch}
+.layer-distances{flex:0 0 var(--distance-gutter);display:grid;gap:3px;padding-left:7px;position:sticky;right:0;z-index:1;background:white;color:var(--ink);font:700 9px/1.35 ui-monospace,monospace;white-space:nowrap}
+
+.legend-group{display:flex;flex-wrap:wrap;gap:6px 16px}
+
+
+
+
+@media print{body{background:white}main{padding:8px}.controls,header button{display:none}.map-scroll{overflow:visible}.columns{display:block}.model-card{margin:15px 0;break-inside:avoid}}
+.map{--layer-gutter:32px;--tick-gutter:60px;--distance-gutter:0px}
+.overlay-map{--layer-gutter:66px;--distance-gutter:76px}
+.map .axis{padding-left:calc(var(--layer-gutter) + var(--tick-gutter));padding-right:var(--distance-gutter)}
+.map .layer-row{height:64px;border-top:1px solid #edf0f4}.map .layer-row.gap{height:64px}
+.curve-plot{flex:none;display:block;height:64px;overflow:hidden;cursor:crosshair}
+.curve-ticks{flex:0 0 var(--tick-gutter);height:64px;display:flex;flex-direction:column;justify-content:space-between;align-items:end;padding:3px;color:var(--muted);font:9px ui-monospace,monospace;white-space:nowrap}
+.curve-line,.curve-zero{fill:none;vector-effect:non-scaling-stroke}.curve-line{stroke:var(--transformer-curve);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.curve-line.mamba{stroke:var(--mamba-curve);stroke-width:2.4;stroke-dasharray:8 5;stroke-linecap:butt}.curve-zero{stroke:#aeb9ca;stroke-width:1}
+.curve-gold,.gold-swatch{fill:#ffe39a;background:#ffe39a}.curve-gold{opacity:.52}.gold-swatch{width:12px;height:10px}
+.curve-swatch{width:28px;border-top:3px solid var(--transformer-curve)}.curve-swatch.mamba{border-top:3px dashed var(--mamba-curve)}
+.curve-legend{padding:9px 14px;margin:0 0 12px;font-weight:650;gap:6px 22px}.columns:has(> .overlay-card) > .model-card{grid-row:span 1}.columns > .curve-legend{grid-column:1/-1;margin:12px 0 0}.columns > .curve-legend + .overlay-card{margin-top:6px}.curve-legend .legend{font-size:12px}.curve-legend .transformer-label{color:var(--transformer-curve)}.curve-legend .mamba-label{color:var(--mamba-curve)}
+
+.fit-width .map{width:100%}
+.fit-width .axis-token{flex:1 1 0;min-width:0;width:0}
+.fit-width .axis-token .axis-label{left:50%}.fit-width .axis-token .axis-label,.axis-token.gold .axis-label{visibility:hidden}
+.fit-width .curve-plot{flex:1 1 0;min-width:0}
+@media(max-width:900px){
+    .map{--tick-gutter:53px;padding-inline:8px}
+    .overlay-map{--layer-gutter:62px;--distance-gutter:72px}
+    .curve-ticks{padding-inline:2px}
+}
+.curve-tooltip{position:fixed;z-index:10;pointer-events:none;max-width:min(360px,calc(100vw - 16px));padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;box-shadow:0 3px 12px #202b3b30;font-size:11px;overflow-wrap:anywhere}
+.curve-tooltip strong{display:block;font-size:14px}
+.curve-hover{fill:#42c5e8;fill-opacity:.52;stroke:#00799c;stroke-width:1;vector-effect:non-scaling-stroke}
+.axis-token .hover-token-label{display:none;position:absolute;left:50%;bottom:var(--hover-label-offset,27px);transform:translateX(-50%);padding:1px 5px;border:1px solid #00799c;border-radius:4px;background:#e1f8ff;color:#134355;font-size:12px;line-height:1.3;font-weight:700;white-space:nowrap;z-index:2;pointer-events:none}
+.axis-token.hovered .hover-token-label{display:block}
+.axis-token.hovered .axis-label{visibility:hidden}
+.map .axis{position:relative}
+.answer-axis-label{position:absolute;width:max-content;max-width:calc(100% - 16px);overflow-wrap:anywhere;padding:2px 6px;font-size:11px;font-weight:700;line-height:1.4;z-index:1}
+.logit-card,.js-trend{grid-column:1/-1;min-width:0;overflow:hidden;margin-top:14px;padding:18px 20px 22px}
+.logit-plot,.js-trend-plot{width:100%;height:auto;display:block;background:#fbfcfe;border:1px solid #e7ebf1;border-radius:8px}
+.logit-plot{cursor:crosshair}
+.js-trend-plot{margin-top:10px}
+.js-trend-plot .curve-line{stroke-width:2.4}
+.js-trend-plot .logit-dot[tabindex]:hover,.js-trend-plot .logit-dot[tabindex]:focus-visible{r:6px;stroke:var(--ink)}
+.logit-dot{fill:var(--transformer-curve);stroke:#fff;stroke-width:1.2;vector-effect:non-scaling-stroke}
+.logit-dot.mamba{fill:var(--mamba-curve)}
+.logit-guide{stroke:#aeb9ca;stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+.logit-axis{stroke:#c5ced9;stroke-width:1;vector-effect:non-scaling-stroke}
+.logit-plot text,.js-trend-plot text{font-family:var(--font-ui);font-variant-numeric:tabular-nums}.logit-tick-label{fill:var(--muted);font-size:12px}.logit-axis-label{fill:var(--ink);font-size:12px;font-weight:600}
+.logit-title{font-size:17px;font-weight:700;margin:0 0 4px;line-height:1.5}
+.logit-description{font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.7}
+.logit-card .curve-line{stroke-width:2.6}.logit-card .curve-line.mamba{stroke-width:2.4}
+.curve-tooltip{font-size:11px;line-height:1.45;font-variant-numeric:tabular-nums}
+.curve-tooltip:has(.logit-js-candidates){width:max-content;max-width:min(420px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:hidden}
+.logit-js-candidates{border-collapse:collapse;margin-top:4px;font-size:11px}
+.logit-js-candidates th,.logit-js-candidates td{text-align:left;vertical-align:top;padding:2px 7px 2px 0;border-bottom:1px solid #edf0f4}
+.curve-tooltip:has(.logit-model-block){max-width:min(320px,calc(100vw - 16px));padding:6px 8px}.curve-tooltip:has(.logit-model-block)>strong{font-size:12px}.curve-tooltip .logit-top strong{display:inline;font-size:inherit}.logit-candidate-values{font-size:10px;color:var(--muted)}
+.logit-model-name{font-weight:650;color:var(--transformer-curve)}.logit-model-name.mamba{color:var(--mamba-curve)}
+@media(max-width:560px){.logit-card,.js-trend{padding:16px 12px}.logit-title{font-size:16px}}
+.logit-top{margin:2px 0;padding-left:14px}.logit-top li{margin:1px 0}.logit-top .hit{font-weight:700;color:#1643a0}
+.logit-top .hit.mamba{color:#a61466}
+.logit-guide.transformer{stroke:var(--transformer-curve)}.logit-guide.mamba{stroke:var(--mamba-curve)}
+.logit-focus{fill:#fff;stroke:var(--transformer-curve);stroke-width:2;pointer-events:none}.logit-focus.mamba{stroke:var(--mamba-curve)}
+.logit-candidate{margin-top:3px;white-space:pre-wrap}.logit-candidate-label{font-size:11px;color:var(--muted)}
+.logit-model-block{margin-top:5px;padding-top:4px;border-top:1px solid #edf0f4}
+.logit-model-block:first-of-type{border-top:0;padding-top:0;margin-top:4px}
+
+.prediction-map-card{padding-bottom:18px}
+.prediction-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.prediction-panel{min-width:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.prediction-panel-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.prediction-panel-head h3{font-size:14px;margin:0;color:var(--transformer-curve)}.prediction-panel.mamba h3{color:var(--mamba-curve)}
+.prediction-key{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.prediction-gradient{display:inline-block;width:64px;height:8px;border-radius:3px;background:linear-gradient(to right,#fff,var(--transformer-curve));border:1px solid #202b3b18}.mamba .prediction-gradient{background:linear-gradient(to right,#fff,var(--mamba-curve))}
+.prediction-scroll{max-height:620px;overflow:auto;scrollbar-width:thin;isolation:isolate}
+.prediction-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:12px;line-height:1.4;font-variant-numeric:tabular-nums}
+.prediction-table th,.prediction-table td{height:32px;padding:6px 8px;border-bottom:1px solid #e1e6ec;border-right:1px solid #e1e6ec;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prediction-table thead th{position:sticky;top:0;z-index:2;background:#f5f7fb;text-align:left;font-weight:600;height:38px}
+.prediction-table tr>:first-child{position:sticky;left:0;width:82px;background:#f5f7fb;color:var(--muted);font-size:11px;font-weight:500;z-index:1}
+.prediction-table thead tr>:first-child{z-index:3}
+.prediction-table .prediction-hit{box-shadow:inset 0 0 0 2px #d49c24}
+.prediction-token{font-weight:600}.prediction-prob{float:right;margin-left:8px;font-size:10px;opacity:.85}
+.prediction-gap td{background:#fafbfd;color:#a0a9b6;text-align:center}
+.prediction-scroll:focus-visible{outline:3px solid #8caff8;outline-offset:-3px}
+.prediction-note{margin:10px 0 0;font-size:11px;color:var(--muted)}
+@media(max-width:700px){.prediction-panels{grid-template-columns:1fr}.prediction-scroll{max-height:460px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="brand">Layer<span>wise</span><span style="font-size:13px;color:#8893a2;letter-spacing:0;font-weight:400;margin-left:12px">研究ビューア</span></div><div class="eyebrow">TRANSFORMER × MAMBA-2 · LAYER RELEVANCE</div></div><button id="download" class="button" type="button">数値データを保存 ↓</button></header>
+<div id="error" class="hidden" role="alert"></div>
+<section class="card prompt-card" aria-label="入力と説明対象"><div>
+<div id="example-control" class="example-control hidden">
+<label for="example-group" class="field-label">問題群<select id="example-group"></select></label>
+<label for="example" class="field-label">SQuAD の問題<select id="example"></select></label>
+</div>
+<div class="field-label" id="context-label">文章</div><div id="context" class="context"></div><div class="field-label" id="question-label">質問</div><div id="question" class="question"></div><details class="prompt-details"><summary class="subtle">モデルに渡したプロンプト</summary><pre id="prompt"></pre></details></div><div class="answer-card"><div class="field-label">共通の説明対象</div><div id="answer" class="answer"></div><span id="answer-source" class="tag">回答を固定して比較</span><div id="answer-count" class="subtle" style="margin-top:5px"></div><p id="reference-note" class="subtle hidden">Relevance と Logit は共通の正解注釈に対する比較です。実験時の回答は各モデル欄に表示します。</p></div></section>
+<section class="card controls" aria-label="表示設定">
+<div class="control"><label>表示内容</label><div class="segments" id="view-segments"><button id="view-relevance" type="button" class="active" aria-pressed="true">Relevance</button><button id="view-logit" type="button" disabled title="このレポートには logit lens がありません">Logit <small>準備中</small></button><button type="button" disabled title="今後追加する表示です">潜在表現 <small>準備中</small></button></div></div>
+<div class="control" id="layout-control"><div id="layout-label" class="field-label">比較レイアウト</div><div class="segments" role="group" aria-labelledby="layout-label"><button id="split-view" type="button" aria-pressed="false">左右</button><button id="overlay-view" type="button" class="active" aria-pressed="true">重ね合わせ</button></div></div>
+<div class="control" id="alignment-control"><label for="alignment">層の対応</label><select id="alignment"><option value="depth">深さを揃える</option><option value="number">同じ層番号</option></select></div>
+<div class="control" id="distribution-metric-control"><label for="distribution-metric">分布の比較指標</label><select id="distribution-metric"><option value="js">JS距離</option><option value="kl">KL（Transformer → Mamba-2）</option></select></div>
+<div class="control"><label for="target">説明する回答トークン</label><select id="target"></select></div>
+<div class="control" id="metric-control" class="hidden"><label for="metric">表示する値</label><select id="metric"><option value="logit">正解トークンの logit</option><option value="prob" selected>正解トークンの確率</option><option value="rank">正解トークンの順位（対数）</option></select></div>
+<div class="control" id="scale-control"><label for="scale">縦軸の尺度</label><select id="scale"><option value="layer">層ごとの最大 |R| に合わせる</option><option value="shared">両モデル・全層で共通の尺度</option></select></div>
+<div class="control" id="zoom-control"><label for="zoom">横軸の表示</label><select id="zoom"><option value="fit" selected>画面幅に合わせる</option><option value="16">狭い</option><option value="22">標準</option><option value="32">広い</option></select></div>
+</section>
+<div id="curve-legend" class="card legend-group curve-legend" aria-label="曲線の凡例">
+<div class="legend transformer-label"><span class="curve-swatch" aria-hidden="true"></span>Transformer（青・実線）</div>
+<div class="legend mamba-label"><span class="curve-swatch mamba" aria-hidden="true"></span>Mamba-2（赤・破線）</div>
+<div class="legend"><span class="gold-swatch" aria-hidden="true"></span>正解の単語の範囲</div>
+</div>
+<div id="models" class="columns"></div>
+<template id="distribution-help">
+<details class="distribution-help">
+<summary>分布距離の見方</summary>
+<p>曲線に表示している共通プロンプトのトークン位置で比較します。JSとKLには、各位置の正負を別々に保持し、各モデルの絶対値総和を1に揃えた分布を使います。片方でも表示範囲の寄与がすべてゼロの場合は「—」です。</p>
+<p><strong>JS距離</strong>は対称で、値は0〜1です。<strong>KLダイバージェンス</strong>は Transformer を基準に Mamba-2 と比べた値（bit）で、上限はありません。同じ位置・符号で Transformer に寄与があり Mamba-2 の寄与がゼロの場合は「∞」です。</p>
+<p><strong>正規化L1</strong>は、位置ごとの符号付きの値の差の絶対値を合計し、両モデルの絶対値の総和で割ります。値は0〜1で、寄与の大きさの差も反映します。両方が全ゼロなら0です。</p>
+<p>「深さを揃える」は、最初と最後の境界を揃え、途中は近い相対深さの実層を対応させます。「同じ層番号」は表示ラベルの番号で対応させます。</p>
+</details>
+</template>
+<div id="curve-tooltip" class="curve-tooltip hidden" role="tooltip"></div>
+<noscript><p class="noscript">このビューアにはJavaScriptが必要です。数値は同じフォルダーのdata.jsonでも確認できます。</p></noscript>
+</main>
+<script id="report-data" type="application/json">@@REPORT@@</script>
+<script id="example-catalog" type="application/json">@@EXAMPLES@@</script>
+<script>
+"use strict";
+const report = JSON.parse(document.getElementById("report-data").textContent);
+const usesGoldReference = report.source?.answer_source === "gold-reference";
+const numericQuestionGroup = "contains-digits";
+const questionGroups = [
+    {value:"correct",label:"正解の問題群",wrongModels:[]},
+    {value:"both-wrong",label:"両モデルが内容を間違えた問題群",wrongModels:["gpt3","mamba2-8b"]},
+    {value:"transformer-wrong",label:"Transformerのみ内容違い",wrongModels:["gpt3"]},
+    {value:"mamba-wrong",label:"Mamba-2のみ内容違い",wrongModels:["mamba2-8b"]},
+    {value:numericQuestionGroup,label:"数字を含む問題群"},
+];
+const reviewedWrongModels = questionGroups.find(group=>group.value===report.source?.question_group)?.wrongModels??[];
+const el = id => document.getElementById(id);
+const shownTokens=report.tokens.slice(0,report.prompt_ids.length);
+const goldPositions=new Set(report.gold_positions??[]);
+const answerRuns=[];
+for(const position of [...goldPositions].sort((a,b)=>a-b)){
+    const last=answerRuns.at(-1);
+    if(last&&last.end===position)last.end++;
+    else answerRuns.push({start:position,end:position+1});
+}
+const hasLogitLens = report.models.every(model => model.logit_lens?.targets?.length === report.answer_ids.length);
+const state = {target:-1, scale:"layer", overlay:true, alignment:"depth", fitWidth:true, view:"relevance", metric:"prob", distributionMetric:"js"};
+const plotObservers = [];
+const modelNames = ["Transformer", "Mamba-2"];
+const displayLayers = Math.max(...report.models.map(model => model.n_layers));
+// Python's round uses ties-to-even; preserve exactly the same placement in JS.
+function roundEven(value) { const floor = Math.floor(value); return value-floor === 0.5 ? floor + floor%2 : Math.round(value); }
+function slotsFor(count, total) { return Array.from({length:count}, (_,index) => count===1 ? total-1 : roundEven(index*(total-1)/(count-1))); }
+const depthSlots = report.models.map(model=>slotsFor(model.n_layers,displayLayers));
+const numberSlots = report.models.map(model=>slotsFor(model.n_layers,model.n_layers));
+function format(value) { return value===0 ? "0" : Math.abs(value)<0.001 || Math.abs(value)>=1000 ? value.toExponential(2) : value.toFixed(4); }
+function piece(index) { const token = report.tokens[index]; return token === " " ? "␠" : token.replaceAll("\n", "↵"); }
+function maxAbs(row) { let result=0; for (const value of row) result=Math.max(result, Math.abs(value)); return result; }
+function matrix(model) { return state.target<0 ? (model.sum_relevance ?? model.mean_relevance) : model.targets[state.target].relevance; }
+function node(tag, cls, text) {const result=document.createElement(tag); if(cls)result.className=cls; if(text!==undefined)result.textContent=text; return result;}
+function globalLimit() {let limit=0; for(const model of report.models)for(const row of matrix(model))limit=Math.max(limit,maxAbs(row.slice(0,shownTokens.length)));return limit;}
+function sum(row) {return row.reduce((total,value)=>total+value,0);}
+function jsBin(p,q) {
+    const mass=p+q;
+    return ((p===0?0:p*Math.log2(2*p/mass))+(q===0?0:q*Math.log2(2*q/mass)))/2;
+}
+function compareRelevance(left,right,metric) {
+    const leftPeak=maxAbs(left),rightPeak=maxAbs(right);
+    const peak=Math.max(leftPeak,rightPeak);
+    if(peak===0)return {distance:null,l1:0};
+
+    const leftMass=leftPeak?sum(left.map(value=>Math.abs(value/leftPeak))):0;
+    const rightMass=rightPeak?sum(right.map(value=>Math.abs(value/rightPeak))):0;
+    const hasDistributions=leftMass>0 && rightMass>0;
+    const useKL=metric==="kl";
+    let divergence=0,difference=0;
+    for(let position=0;position<left.length;position++){
+        const a=left[position],b=right[position];
+        difference+=Math.abs(a/peak-b/peak);
+        if(hasDistributions){
+            const p=(a/leftPeak)/leftMass,q=(b/rightPeak)/rightMass;
+            // Positive and negative relevance at the same position are different bins.
+            if(useKL){
+                if(a===0)continue;
+                if(Math.sign(a)!==Math.sign(b)){
+                    divergence=Infinity;
+                }else if(p!==0){
+                    // Recover the log probability if normalization underflowed.
+                    const logQ=q===0?Math.log2(Math.abs(b))-Math.log2(rightPeak)-Math.log2(rightMass)
+                        :Math.log2(Math.abs(q));
+                    divergence+=Math.abs(p)*(Math.log2(Math.abs(p))-logQ);
+                }
+            }else{
+                divergence+=jsBin(Math.max(p,0),Math.max(q,0))+jsBin(Math.max(-p,0),Math.max(-q,0));
+            }
+        }
+    }
+    const totalMass=leftMass*(leftPeak/peak)+rightMass*(rightPeak/peak);
+    const nonnegativeDivergence=Math.max(0,divergence);
+    const distance=useKL?nonnegativeDivergence:Math.sqrt(Math.min(1,nonnegativeDivergence));
+    return {
+        distance:hasDistributions?distance:null,
+        l1:Math.min(1,difference/totalMass),
+    };
+}
+function layerLabel(boundary) {
+    return boundary===undefined?"—":`L${String(boundary).padStart(2,"0")}`;
+}
+function compareLayerPairs([left,right]) {
+    const pairs = new Map();
+    for(const [slot,leftDepth] of left.bySlot){
+        const rightDepth = right.bySlot.get(slot);
+        if(rightDepth===undefined)continue;
+        const leftRow = left.values[leftDepth].slice(0,shownTokens.length);
+        const rightRow = right.values[rightDepth].slice(0,shownTokens.length);
+        const {distance:js,l1} = compareRelevance(leftRow,rightRow,"js");
+        const distance = state.overlay && state.distributionMetric==="kl"
+            ? compareRelevance(leftRow,rightRow,"kl").distance : js;
+        const label = slot===-1?"入力":`${layerLabel(leftDepth)} / ${layerLabel(rightDepth)}`;
+        pairs.set(slot,{label,js,distance,l1});
+    }
+    return pairs;
+}
+function describeBoundary(boundary, model) {
+    if(boundary===0)return "入力（埋め込み）";
+    if(report.method.scope==="whole-block")return boundary===model.n_layers
+        ? "回答ロジットからの初期配分" : `第${boundary+1}層の入力`;
+    return `第${boundary}層の出力`;
+}
+function setOverlay(overlay) {
+    if(state.overlay===overlay)return;
+    state.overlay=overlay;
+    render();
+}
+function setView(view) {
+    if(state.view===view)return;
+    if(view==="logit" && !hasLogitLens)return;
+    state.view=view;
+    render();
+}
+function metricLabel(metric) {
+    return {logit:"logit", prob:"確率", rank:"順位"}[metric];
+}
+function describeLensBoundary(boundary, model) {
+    if(boundary===0)return "埋め込み";
+    if(boundary===model.n_layers)return `第${boundary}層の出力（最終）`;
+    return `第${boundary}層の出力`;
+}
+function lensSeries(model) {
+    const lens = model.logit_lens;
+    const targets = state.target < 0 ? lens.targets : [lens.targets[state.target]];
+    const height = model.n_layers + 1;
+    return Array.from({length:height}, (_, depth) => {
+        const values = targets.map(target => target.layers[depth]);
+        let value;
+        if(state.metric === "rank"){
+            value = Math.exp(values.reduce((total, layer) => total + Math.log(layer.rank), 0) / values.length);
+        }else{
+            value = values.reduce((total, layer) => total + layer[state.metric], 0) / values.length;
+        }
+        return {
+            depth,
+            x: depth / model.n_layers,
+            value,
+            layers: state.target < 0 ? null : values[0],
+        };
+    });
+}
+function makeModel(model,index) {
+    const panel=node("section","card model-card");panel.setAttribute("aria-label",model.label);
+    const head=node("div",`model-head ${index===1?"mamba":""}`);
+    const heading=node("div","model-name");const title=node("h2");title.append(node("span","dot"),document.createTextNode(modelNames[index]));
+    heading.append(title,node("span","layer-count",`${model.n_layers} LAYERS`));
+    head.append(heading,node("div","model-id",model.model_id));
+    const generated=model.generation.prediction;
+    const generation=node("div","generation");generation.append(document.createTextNode(`${model.generation_source==="saved-squad"?"実験時の生成回答":"生成回答"}：${generated || "（空の回答）"}`));
+    const matched=generated.trim()===report.answer.trim();
+    const startsWithTarget=report.answer_ids.every((id,position)=>model.generation.generated_ids[report.answer_indices?.[position]??position]===id);
+    const status = usesGoldReference
+        ? (reviewedWrongModels.includes(model.family)?"内容違い":model.generation.exact_match?"EM正解":"EM不一致")
+        : (matched?"完全一致":startsWithTarget?"対象から続く生成":"対象と異なる");
+    const different = usesGoldReference?status!=="EM正解":!matched&&!startsWithTarget;
+    generation.append(node("span",`status ${different?"different":""}`,status));
+    if(model.generation.stop_reason==="max_new_tokens")generation.append(node("span","subtle"," / 生成上限に到達"));
+    head.append(generation);
+    if(!usesGoldReference && !matched)head.append(node("div","match-note",startsWithTarget?"説明対象の後に続く生成は、図の対象に含めません。":"以下は共通の説明対象を与えた場合の寄与です。"));
+    panel.append(head);
+    return panel;
+}
+const plotHeight=64;
+let hoveredPosition=null;
+function markHovered(position) {
+    if(position===hoveredPosition)return;
+    for(const map of document.querySelectorAll(".map")){
+        const ticks=map.querySelectorAll(".axis-token");
+        if(hoveredPosition!==null)ticks[hoveredPosition]?.classList.remove("hovered");
+        if(position!==null){
+            const tick=ticks[position];
+            tick.classList.add("hovered");
+            tick.querySelector(".hover-token-label").textContent=piece(position).trim()||piece(position);
+        }
+        for(const band of map.querySelectorAll(".curve-hover")){
+            band.classList.toggle("hidden",position===null);
+            if(position!==null)band.setAttribute("x",position);
+        }
+    }
+    hoveredPosition=position;
+}
+function clearHover() {
+    markHovered(null);
+    el("curve-tooltip").classList.add("hidden");
+}
+function placeTooltip(event) {
+    const tooltip = el("curve-tooltip");
+    tooltip.classList.remove("hidden");
+    const x = Math.max(8,Math.min(event.clientX+12,window.innerWidth-tooltip.offsetWidth-8));
+    const below = event.clientY+14;
+    const y = below+tooltip.offsetHeight+8<=window.innerHeight?below:Math.max(8,event.clientY-tooltip.offsetHeight-10);
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+}
+function svgNode(tag, attributes) {
+    const svg=document.createElementNS("http://www.w3.org/2000/svg",tag);
+    for(const [name,value] of Object.entries(attributes))svg.setAttribute(name,value);
+    return svg;
+}
+function observePlotWidth(card,drawPlot) {
+    drawPlot(1000);
+    let previousWidth = 0;
+    const observer = new ResizeObserver(entries => {
+        const width = Math.round(entries[0].contentRect.width);
+        if(width<=0 || width===previousWidth)return;
+        previousWidth = width;
+        clearHover();
+        drawPlot(width);
+    });
+    observer.observe(card);
+    plotObservers.push(observer);
+}
+function makeCurve(layers,limit,boundaries) {
+    const width=shownTokens.length;
+    const middle=plotHeight/2;
+    const plot=svgNode("svg",{
+        class:"curve-plot",viewBox:`0 0 ${width} ${plotHeight}`,
+        preserveAspectRatio:"none","aria-hidden":"true",
+    });
+    if(!state.fitWidth)plot.style.width=`calc(var(--cell) * ${width})`;
+    for(const position of goldPositions)if(position<width){
+        plot.append(svgNode("rect",{class:"curve-gold",x:position,y:0,width:1,height:plotHeight}));
+    }
+    plot.append(svgNode("rect",{class:"curve-hover hidden",x:0,y:0,width:1,height:plotHeight}));
+    plot.append(svgNode("line",{class:"curve-zero",x1:0,x2:width,y1:middle,y2:middle}));
+    for(const {row,index} of layers){
+        if(!row)continue;
+        const points=row.slice(0,width).map((value,position)=>{
+            const y=middle-(limit?value/limit:0)*(middle-3);
+            return `${position+.5},${y.toFixed(3)}`;
+        });
+        const strokeClass=index===1?"curve-line mamba":"curve-line";
+        if(points.length===1)points.push(points[0].replace("0.5,","0.6,"));
+        plot.append(svgNode("polyline",{class:strokeClass,points:points.join(" ")}));
+    }
+    plot.addEventListener("pointermove",event=>{
+        const rect=plot.getBoundingClientRect();
+        const position=Math.min(width-1,Math.max(0,Math.floor((event.clientX-rect.left)*width/rect.width)));
+        markHovered(position);
+        const tooltip=el("curve-tooltip");
+        tooltip.replaceChildren(node("strong","",piece(position).trim()||piece(position)));
+        layers.forEach(({row},index)=>{
+            const value=row?.[position];
+            if(value!==undefined)tooltip.append(node("div","",`${boundaries[index]} · R = ${value.toPrecision(8)}`));
+        });
+        placeTooltip(event);
+    });
+    plot.addEventListener("pointerleave",clearHover);
+    return plot;
+}
+function layoutAnswerLabels(map) {
+    const axis=map.querySelector(".axis");
+    const ticks=axis.querySelectorAll(".axis-token");
+    const lanes=[];
+    axis.querySelectorAll(".answer-axis-label").forEach((label,index)=>{
+        const {start,end}=answerRuns[index];
+        const first=ticks[start],last=ticks[end-1];
+        const center=(first.offsetLeft+last.offsetLeft+last.offsetWidth)/2;
+        const left=Math.max(8,Math.min(center-label.offsetWidth/2,axis.clientWidth-label.offsetWidth-8));
+        const right=left+label.offsetWidth;
+        let lane=lanes.findIndex(item=>item.right+6<=left);
+        if(lane<0){lane=lanes.length;lanes.push({right:0,height:0});}
+        lanes[lane].right=right;
+        lanes[lane].height=Math.max(lanes[lane].height,label.offsetHeight);
+        label.style.left=`${left}px`;
+        label.dataset.lane=lane;
+    });
+    const offsets=[];
+    let bottom=state.fitWidth?4:88;
+    for(const lane of lanes){
+        offsets.push(bottom);
+        bottom+=lane.height+4;
+    }
+    axis.querySelectorAll(".answer-axis-label").forEach(label=>{
+        label.style.bottom=`${offsets[Number(label.dataset.lane)]}px`;
+    });
+    axis.style.setProperty("--hover-label-offset",`${bottom+6}px`);
+    axis.style.height=`${Math.max(40,bottom+29)}px`;
+}
+const answerLabelObserver=new ResizeObserver(entries=>{
+    for(const {target} of entries)layoutAnswerLabels(target);
+});
+function makeMap(models,common,pairs) {
+    const overlay=models.length===2;
+    const scroll=node("div",state.fitWidth?"map-scroll fit-width":"map-scroll");scroll.tabIndex=0;
+    scroll.setAttribute("aria-label",`${overlay?"両モデルの重ね合わせ":modelNames[models[0].index]}の層別分布曲線（横にスクロール可能）`);
+    const map=node("div",overlay?"map overlay-map":"map");const axis=node("div","axis");
+    shownTokens.forEach((token,position)=>{const tick=node("div",goldPositions.has(position)?"axis-token gold":"axis-token");const label=node("span","axis-label",goldPositions.has(position)?piece(position):piece(position).slice(0,12));label.title=`位置 ${position}: ${token}`;tick.append(label,node("span","hover-token-label"));axis.append(tick);});
+    for(const {start,end} of answerRuns){
+        const answer=shownTokens.slice(start,end).join("").trim();
+        axis.append(node("span","answer-axis-label",answer));
+    }
+    map.append(axis);
+    const slots=overlay?pairs.keys()
+        :Array.from({length:displayLayers+1},(_,index)=>index-1);
+    for(const slot of slots) {
+        const layers=models.map(({index,values,bySlot})=>{
+            const boundary=bySlot.get(slot);
+            return {index,boundary,row:values[boundary]};
+        });
+        if(layers.every(layer=>!layer.row)){const gap=node("div","layer-row gap");gap.setAttribute("aria-hidden","true");gap.append(node("span","layer-label","—"),node("span","gap-line"));map.append(gap);continue;}
+        const limit=state.scale==="layer"?Math.max(...layers.map(layer=>maxAbs(layer.row?.slice(0,shownTokens.length)??[]))):common;
+        const container=node("div",`layer-row ${slot===-1?"input-row":""}`);
+        const boundaries=layers.map(({index,boundary})=>`${modelNames[index]} ${boundary===undefined?"実層なし":describeBoundary(boundary,report.models[index])}`);
+        container.setAttribute("aria-label",boundaries.join(" / "));
+        const label=overlay?pairs.get(slot).label:slot===-1?"入力":layerLabel(layers[0].boundary);
+        container.append(node("span","layer-label",label));
+        const ticks=node("div","curve-ticks");
+        ticks.append(node("span","",limit?`+${format(limit)}`:""),node("span","","0"),
+                     node("span","",limit?`−${format(limit)}`:""));
+        container.append(ticks,makeCurve(layers,limit,boundaries));
+        if(overlay){
+            const metric=state.distributionMetric;
+            const {distance,l1}=pairs.get(slot);
+            const distances=node("div","layer-distances");
+            const value=distance===null?"—":distance===Infinity?"∞":format(distance);
+            const distributionValue=node("span","",`${metric.toUpperCase()} ${value}`);
+            const metricName=metric==="kl"?"KLダイバージェンス（Transformer → Mamba-2、bit）":"Jensen–Shannon距離";
+            distributionValue.title=distance===null?`${metricName}は表示範囲の寄与がすべてゼロのモデルがあるため未定義`:metricName;
+            const l1Value=node("span","",`L1 ${format(l1)}`);
+            l1Value.title="正規化L1";
+            distances.append(distributionValue,l1Value);
+            container.append(distances);
+        }
+        map.append(container);
+    }
+    scroll.append(map);return scroll;
+}
+function makeJSTrend(points,{heading="TransformerとMambaのRelevance分布間のJS距離",description,showPoint}={}) {
+    const card = node("section","card js-trend");
+    card.setAttribute("aria-labelledby","js-trend-title");
+    const title = node("h2","logit-title",heading);
+    title.id = "js-trend-title";
+    card.append(title);
+    if(description)card.append(node("p","logit-description",description));
+    if(points.every(point=>point.js===null)){
+        card.append(node("p","subtle","JS距離を計算できる層ペアがありません。"));
+        return card;
+    }
+    if(points.some(point=>point.js===null)){
+        card.append(node("p","subtle","JS距離が未定義の層ペアでは線が途切れます。"));
+    }
+    const plot = node("div");
+    card.append(plot);
+    observePlotWidth(card,availableWidth=>{
+        const width = Math.max(240,availableWidth), height = 224;
+        const left = 42, right = width - 20, top = 18, bottom = height - 52;
+        const x = index=>left + index/(points.length-1)*(right-left);
+        const y = value=>bottom - value*(bottom-top);
+        const svg = svgNode("svg",{
+            class:"js-trend-plot",viewBox:`0 0 ${width} ${height}`,
+            role:"img","aria-label":"対応する層ペアごとのJS距離（0〜1）",
+        });
+        svg.append(svgNode("line",{class:"logit-axis",x1:left,x2:left,y1:top,y2:bottom}));
+        for(const tick of [0,0.25,0.5,0.75,1]){
+            const position = y(tick);
+            svg.append(svgNode("line",{class:tick===0?"logit-axis":"logit-guide",x1:left,x2:right,y1:position,y2:position}));
+            const label = svgNode("text",{class:"logit-tick-label",x:left-8,y:position+4,"text-anchor":"end"});
+            label.textContent = tick;
+            svg.append(label);
+        }
+        const tickCount = Math.min(width<520?3:5,points.length);
+        for(let tick=0;tick<tickCount;tick++){
+            const index = Math.round(tick*(points.length-1)/(tickCount-1));
+            const anchor = tick===0?"start":tick===tickCount-1?"end":"middle";
+            const label = svgNode("text",{class:"logit-tick-label",x:x(index),y:bottom+19,"text-anchor":anchor});
+            label.textContent = points[index].label;
+            svg.append(label);
+        }
+        const axisLabel = svgNode("text",{class:"logit-axis-label",x:(left+right)/2,y:height-10,"text-anchor":"middle"});
+        axisLabel.textContent = "層ペア（Transformer / Mamba-2）";
+        svg.append(axisLabel);
+
+        const path = [];
+        const markers = [];
+        let connected = false;
+        points.forEach((point,index)=>{
+            const {label,js} = point;
+            if(js===null){
+                connected = false;
+                return;
+            }
+            const cx = x(index), cy = y(js);
+            path.push(`${connected?"L":"M"} ${cx} ${cy}`);
+            connected = true;
+            const marker = svgNode("circle",{class:"logit-dot",cx,cy,r:3.5});
+            const pointLabel = `${label} · JS ${format(js)}`;
+            if(showPoint){
+                marker.setAttribute("tabindex","0");
+                marker.setAttribute("aria-label",pointLabel);
+                const show = event=>{showPoint(point,pointLabel);placeTooltip(event);};
+                marker.addEventListener("pointerenter",show);
+                marker.addEventListener("pointermove",placeTooltip);
+                marker.addEventListener("pointerleave",clearHover);
+                marker.addEventListener("focus",()=>{
+                    const bounds = marker.getBoundingClientRect();
+                    show({clientX:bounds.right,clientY:bounds.bottom});
+                });
+                marker.addEventListener("blur",clearHover);
+            }else{
+                const tooltip = svgNode("title",{});
+                tooltip.textContent = pointLabel;
+                marker.append(tooltip);
+            }
+            markers.push(marker);
+        });
+        svg.append(svgNode("path",{class:"curve-line",d:path.join(" ")}),...markers);
+        plot.replaceChildren(svg);
+    });
+    return card;
+}
+function showLogitJSCandidates({depths},pointLabel) {
+    const tooltip = el("curve-tooltip");
+    const wholeAnswer = state.target < 0;
+    const table = node("table","logit-js-candidates");
+    const headings = node("tr");
+    for(const label of [wholeAnswer?"回答トークン":"順位",...modelNames]){
+        const cell = node("th","",label);
+        cell.scope = "col";
+        headings.append(cell);
+    }
+    const head = node("thead");
+    head.append(headings);
+    const body = node("tbody");
+    const addRow = (label, targetIndex, rank) => {
+        const row = node("tr");
+        row.append(node("td","",label));
+        report.models.forEach((model,index)=>{
+            const item = model.logit_lens.targets[targetIndex].layers[depths[index]].top[rank];
+            const candidate = item
+                ? `${item[1].replaceAll("▁"," ").replaceAll("\n","↵").trim()||"␠"} · ${(item[2]*100).toFixed(2)}%`
+                : "—";
+            row.append(node("td","",candidate));
+        });
+        body.append(row);
+    };
+    if(wholeAnswer){
+        report.answer_pieces.forEach((piece,index)=>addRow(`${index+1}. ${piece}`,index,0));
+    }else{
+        const count = Math.max(...report.models.map((model,index)=>
+            model.logit_lens.targets[state.target].layers[depths[index]].top.length));
+        for(let rank=0;rank<count;rank++)addRow(String(rank+1),state.target,rank);
+    }
+    table.append(head,body);
+    tooltip.replaceChildren(node("strong","",pointLabel),
+        node("div","subtle",wholeAnswer?"保存済みLogit lensの各位置の1位候補":"保存済みLogit lensの上位候補"),table);
+}
+function makeLogitJSTrend(distribution) {
+    const values = distribution.js_per_answer_token;
+    const points = distribution.layer_pairs.map((depths,index)=>({
+        depths,
+        label:index===0?"入力":depths.map(layerLabel).join(" / "),
+        js:state.target<0?sum(values.map(row=>row[index]))/values.length:values[state.target][index],
+    }));
+    const scope = state.target<0?"回答トークンごとの距離を平均しています。":"選んだ回答トークンの予測位置で比較しています。";
+    return makeJSTrend(points,{
+        heading:"予測分布のJS距離",
+        description:`Transformer と Mamba-2 の次トークン予測の確率分布を、共通語彙 ${distribution.vocab_size.toLocaleString("ja-JP")} トークン全体で比較します。${scope}`,
+        showPoint:showLogitJSCandidates,
+    });
+}
+function logitYScale(seriesList) {
+    const values = seriesList.flatMap(series => series.map(point => point.value));
+    if(state.metric === "rank"){
+        const max = Math.max(2, ...values);
+        return {
+            toY(value, height, pad) {
+                const top = Math.log(max), bottom = Math.log(1);
+                const t = (Math.log(Math.max(1, value)) - bottom) / (top - bottom || 1);
+                return pad + (1 - t) * (height - 2 * pad);
+            },
+            ticks: [...new Set([1, Math.max(2, Math.round(Math.sqrt(max))), Math.ceil(max)])].filter(tick => tick <= max),
+            max,
+        };
+    }
+    if(state.metric === "prob"){
+        const max = Math.max(1e-6, ...values);
+        const ceiling = Math.min(1, max * 1.08);
+        return {
+            toY(value, height, pad) {
+                return pad + (1 - value / ceiling) * (height - 2 * pad);
+            },
+            ticks: [0, ceiling / 4, ceiling / 2, ceiling * 3 / 4, ceiling],
+            max: ceiling,
+        };
+    }
+    const lo = Math.min(0, ...values);
+    const hi = Math.max(0, ...values);
+    const padValue = Math.max(1e-3, (hi - lo) * 0.08);
+    const min = lo - padValue, max = hi + padValue;
+    return {
+        toY(value, height, pad) {
+            return pad + (1 - (value - min) / (max - min || 1)) * (height - 2 * pad);
+        },
+        ticks: [min, 0, max],
+        max, min,
+    };
+}
+function formatMetric(value) {
+    if(state.metric === "rank") return value >= 100 ? value.toFixed(0) : value.toFixed(2);
+    if(state.metric === "prob") return (value * 100).toFixed(2) + "%";
+    return format(value);
+}
+function makeLogitCard() {
+    const card = node("section", "card logit-card");
+    card.setAttribute("aria-label", "Logit lens");
+    const title = state.target < 0
+        ? `回答全体 · ${metricLabel(state.metric)}の推移`
+        : `回答トークン ${state.target + 1} · ${metricLabel(state.metric)}の推移`;
+    card.append(node("h2", "logit-title", title));
+    const aggregation = state.target < 0
+        ? (state.metric === "rank" ? "回答トークンの順位の幾何平均を表示。" : "回答トークンの値の算術平均を表示。") : "";
+    card.append(node("p", "logit-description", `${aggregation}横軸は埋め込み（0）から最終層（1）までの相対深さ。曲線にカーソルを合わせると各層の値を確認できます。`));
+    const seriesList = report.models.map(lensSeries);
+    const scale = logitYScale(seriesList);
+    function drawPlot(availableWidth) {
+        const width = Math.max(240, Math.round(availableWidth));
+        const height = width < 600 ? 320 : 360;
+        const left = 78, right = 22, top = 44, bottom = 66;
+        const plotWidth = width - left - right, plotHeight = height - top - bottom;
+        const svg = svgNode("svg", {
+            class: "logit-plot", viewBox: `0 0 ${width} ${height}`,
+            preserveAspectRatio: "xMidYMid meet", role: "img",
+            "aria-label": title,
+        });
+        svg.append(svgNode("line", {class: "logit-axis", x1: left, x2: left, y1: top, y2: top + plotHeight}));
+        svg.append(svgNode("line", {class: "logit-axis", x1: left, x2: left + plotWidth, y1: top + plotHeight, y2: top + plotHeight}));
+        for(const tick of scale.ticks){
+            const y = scale.toY(tick, plotHeight, 0) + top;
+            svg.append(svgNode("line", {class: "logit-guide", x1: left, x2: left + plotWidth, y1: y, y2: y}));
+            const label = svgNode("text", {class: "logit-tick-label", x: left - 8, y: y + 4, "text-anchor": "end"});
+            label.textContent = formatMetric(tick);
+            svg.append(label);
+        }
+        for(const [fraction, labelText] of [[0, "0"], [0.25, "0.25"], [0.5, "0.5"], [0.75, "0.75"], [1, "1"]]){
+            const x = left + fraction * plotWidth;
+            const label = svgNode("text", {class: "logit-tick-label", x, y: height - 40, "text-anchor": "middle"});
+            label.textContent = labelText;
+            svg.append(label);
+        }
+        const depthLabel = svgNode("text", {class: "logit-axis-label", x: left + plotWidth / 2, y: height - 13, "text-anchor": "middle"});
+        depthLabel.textContent = "相対深さ ℓ / L";
+        svg.append(depthLabel);
+        const valueLabel = svgNode("text", {class: "logit-axis-label", x: left, y: 23});
+        valueLabel.textContent = state.metric === "rank" ? "順位（対数目盛）" : metricLabel(state.metric);
+        svg.append(valueLabel);
+        seriesList.forEach((series, index) => {
+            const points = series.map(point => {
+                const x = left + point.x * plotWidth;
+                const y = top + scale.toY(point.value, plotHeight, 0);
+                return `${x.toFixed(2)},${y.toFixed(2)}`;
+            });
+            svg.append(svgNode("polyline", {
+                class: index === 1 ? "curve-line mamba" : "curve-line",
+                points: points.join(" "),
+                "vector-effect": "non-scaling-stroke",
+            }));
+            for(const point of series){
+                const x = left + point.x * plotWidth;
+                const y = top + scale.toY(point.value, plotHeight, 0);
+                svg.append(svgNode("circle", {
+                    class: index === 1 ? "logit-dot mamba" : "logit-dot",
+                    cx: x, cy: y, r: 3.2,
+                }));
+            }
+        });
+        const guides = seriesList.map((_, index) => {
+            const guide = svgNode("line", {
+                class: `logit-guide ${index === 1 ? "mamba" : "transformer"} hidden`,
+                x1: left, x2: left, y1: top, y2: top + plotHeight,
+            });
+            const focus = svgNode("circle", {
+                class: `logit-focus ${index === 1 ? "mamba" : ""} hidden`, cx: left, cy: top, r: 5,
+            });
+            svg.append(guide, focus);
+            return {guide, focus};
+        });
+        function nearestDepth(event) {
+            const rect = svg.getBoundingClientRect();
+            const x = (event.clientX - rect.left) / rect.width * width;
+            const fraction = Math.min(1, Math.max(0, (x - left) / plotWidth));
+            return report.models.map((model, index) => {
+                const series = seriesList[index];
+                let best = series[0], bestDistance = Infinity;
+                for(const point of series){
+                    const distance = Math.abs(point.x - fraction);
+                    if(distance < bestDistance){ best = point; bestDistance = distance; }
+                }
+                return {index, model, point: best};
+            });
+        }
+        svg.addEventListener("pointermove", event => {
+            const nearest = nearestDepth(event);
+            const tooltip = el("curve-tooltip");
+            tooltip.replaceChildren(node("strong", "", "各モデルの層と最大候補"));
+            nearest.forEach(({index, model, point}) => {
+                const x = left + point.x * plotWidth;
+                const {guide, focus} = guides[index];
+                guide.classList.remove("hidden");
+                guide.setAttribute("x1", x);
+                guide.setAttribute("x2", x);
+                focus.classList.remove("hidden");
+                focus.setAttribute("cx", x);
+                focus.setAttribute("cy", top + scale.toY(point.value, plotHeight, 0));
+                const block = node("div", "logit-model-block");
+                block.append(node("div", index === 1 ? "logit-model-name mamba" : "logit-model-name", `${modelNames[index]} · ${describeLensBoundary(point.depth, model)}`));
+                block.append(node("div", "subtle", `深さ ${point.depth}/${model.n_layers} · ${metricLabel(state.metric)} ${formatMetric(point.value)}`));
+                const targetIndices = state.target < 0
+                    ? model.logit_lens.targets.map((_, targetIndex) => targetIndex) : [state.target];
+                for(const targetIndex of targetIndices){
+                    const layer = model.logit_lens.targets[targetIndex].layers[point.depth];
+                    const candidates = state.target < 0 ? layer.top.slice(0, 1) : layer.top;
+                    const candidateBlock = node("div", "logit-candidate");
+                    if(state.target >= 0) candidateBlock.append(node("div", "logit-candidate-label", "上位候補（logit順）"));
+                    const list = node("ol", "logit-top");
+                    for(const [tokenId, tokenPiece, prob, savedLogit] of candidates){
+                        // Legacy reports store probabilities; softmax ratios recover logit differences.
+                        const candidateLogit = savedLogit ?? (layer.prob > 0 && prob > 0
+                            ? layer.logit + Math.log(prob) - Math.log(layer.prob) : null);
+                        const logitText = candidateLogit === null ? "未保存" : `${savedLogit == null ? "≈ " : ""}${format(candidateLogit)}`;
+                        const item = node("li", tokenId === report.answer_ids[targetIndex] ? (index === 1 ? "hit mamba" : "hit") : "");
+                        item.append(node("strong", "", tokenPiece.replaceAll("▁", " ").replaceAll("\n", "↵") || "␠"),
+                            node("span", "logit-candidate-values", `  logit ${logitText} · ${(prob * 100).toFixed(2)}%`));
+                        list.append(item);
+                    }
+                    candidateBlock.append(list);
+                    block.append(candidateBlock);
+                }
+                tooltip.append(block);
+            });
+            placeTooltip(event);
+        });
+        svg.addEventListener("pointerleave", () => {
+            guides.forEach(({guide, focus}) => {guide.classList.add("hidden");focus.classList.add("hidden");});
+            el("curve-tooltip").classList.add("hidden");
+        });
+        const previous = card.querySelector(".logit-plot");
+        if(previous) previous.replaceWith(svg);
+        else card.append(svg);
+    }
+    observePlotWidth(card,drawPlot);
+    return card;
+}
+function makePredictionMap() {
+    const card = node("section", "card logit-card prediction-map-card");
+    card.setAttribute("aria-label", "各層の最大候補マップ");
+    card.append(node("h2", "logit-title", "各層の最大候補マップ"),
+        node("p", "logit-description", "縦軸は層、横軸は回答トークンの予測位置。各セルに1位のトークンを表示し、色が濃いほどその確率が高くなります。金枠は正解トークンとの一致です。"));
+    const panels = node("div", "prediction-panels");
+    const targetIndices = state.target < 0 ? report.answer_ids.map((_, index) => index) : [state.target];
+    report.models.forEach((model, modelIndex) => {
+        const panel = node("section", `prediction-panel ${modelIndex === 1 ? "mamba" : ""}`);
+        panel.setAttribute("aria-label", `${modelNames[modelIndex]}の最大候補`);
+        const head = node("div", "prediction-panel-head");
+        const key = node("div", "prediction-key");
+        key.append(node("span", "", "確率 0%"), node("span", "prediction-gradient"), node("span", "", "100%"));
+        head.append(node("h3", "", `${modelNames[modelIndex]} · ${model.n_layers}層`), key);
+        const scroll = node("div", "prediction-scroll");
+        scroll.tabIndex = 0;
+        scroll.setAttribute("role", "region");
+        scroll.setAttribute("aria-label", `${modelNames[modelIndex]}の層別候補。スクロールして全層を表示`);
+        const table = node("table", "prediction-table");
+        table.style.minWidth = `${82 + targetIndices.length * 132}px`;
+        const caption = node("caption", "hidden", `${modelNames[modelIndex]}の各層・回答予測位置における最大候補と確率`);
+        const thead = node("thead");
+        const header = node("tr");
+        const layerHeader = node("th", "", "層 ℓ / L");
+        layerHeader.scope = "col";
+        header.append(layerHeader);
+        for(const targetIndex of targetIndices){
+            const th = node("th", "", "候補の単語");
+            th.scope = "col";
+            th.title = `回答トークン ${targetIndex + 1}「${report.answer_pieces[targetIndex]}」を予測する位置`;
+            header.append(th);
+        }
+        thead.append(header);
+        const body = node("tbody");
+        const slots = slotsFor(model.n_layers + 1, displayLayers + 1);
+        const depthAtSlot = new Map(slots.map((slot, depth) => [slot, depth]));
+        const color = modelIndex === 1 ? [166, 20, 102] : [22, 67, 160];
+        for(let slot = 0; slot <= displayLayers; slot++){
+            const depth = depthAtSlot.get(slot);
+            const row = node("tr", depth === undefined ? "prediction-gap" : "");
+            const label = node("th", "", depth === undefined ? "—" : `${depth} / ${model.n_layers}`);
+            label.scope = "row";
+            label.title = depth === undefined ? "この相対深さに対応する実層はありません" : describeLensBoundary(depth, model);
+            row.append(label);
+            for(const targetIndex of targetIndices){
+                if(depth === undefined){row.append(node("td", "", "—"));continue;}
+                const layer = model.logit_lens.targets[targetIndex].layers[depth];
+                const [tokenId, piece, prob, savedLogit] = layer.top[0];
+                const token = piece.replaceAll("▁", " ").replaceAll("\n", "↵");
+                const cell = node("td", tokenId === report.answer_ids[targetIndex] ? "prediction-hit" : "");
+                cell.style.backgroundColor = `rgb(${color.map(channel => Math.round(255 + (channel - 255) * prob)).join(",")})`;
+                cell.style.color = prob > 0.55 ? "#fff" : "#202b3b";
+                cell.append(node("span", "prediction-prob", `${(prob * 100).toFixed(1)}%`),
+                    node("span", "prediction-token", token.trim() ? token : "␠"));
+                const logit = savedLogit ?? (layer.prob > 0 && prob > 0 ? layer.logit + Math.log(prob) - Math.log(layer.prob) : null);
+                cell.title = `${describeLensBoundary(depth, model)} · ${token} [ID ${tokenId}]\n確率 ${(prob * 100).toFixed(2)}% · logit ${logit === null ? "未保存" : `${savedLogit == null ? "≈ " : ""}${format(logit)}`}${tokenId === report.answer_ids[targetIndex] ? "\n正解トークンと一致" : ""}`;
+                row.append(cell);
+            }
+            body.append(row);
+        }
+        table.append(caption, thead, body);
+        scroll.append(table);
+        panel.append(head, scroll);
+        panels.append(panel);
+    });
+    const scrolls = [...panels.querySelectorAll(".prediction-scroll")];
+    scrolls.forEach(scroll => scroll.addEventListener("scroll", () => {
+        for(const other of scrolls) if(other !== scroll){
+            if(other.scrollTop !== scroll.scrollTop) other.scrollTop = scroll.scrollTop;
+            if(other.scrollLeft !== scroll.scrollLeft) other.scrollLeft = scroll.scrollLeft;
+        }
+    }));
+    card.append(panels, node("p", "prediction-note", "両モデルの行は相対深さに合わせて配置しています。— は対応する実層がない位置です。埋め込み（0）から最終層までスクロールでき、左右のスクロールは連動します。"));
+    return card;
+}
+function syncControls() {
+    const logit = state.view === "logit";
+    el("layout-control").classList.toggle("hidden", logit);
+    el("alignment-control").classList.toggle("hidden", logit);
+    el("distribution-metric-control").classList.toggle("hidden", logit || !state.overlay);
+    el("scale-control").classList.toggle("hidden", logit);
+    el("zoom-control").classList.toggle("hidden", logit);
+    el("metric-control").classList.toggle("hidden", !logit);
+    el("curve-legend").classList.toggle("hidden", false);
+    el("curve-legend").lastElementChild.classList.toggle("hidden", logit);
+    el("target").options[0].textContent = logit
+        ? (state.metric === "rank" ? "回答全体の平均（幾何平均）" : "回答全体の平均")
+        : (report.models[0].sum_relevance ? "回答全体の合計（符号付き）" : "回答全体の平均（符号付き）");
+    for(const [id, active] of [["view-relevance", !logit], ["view-logit", logit]]){
+        el(id).classList.toggle("active", active);
+        el(id).setAttribute("aria-pressed", String(active));
+    }
+    for(const [id, active] of [["split-view", !state.overlay], ["overlay-view", state.overlay]]){
+        el(id).classList.toggle("active", active);
+        el(id).setAttribute("aria-pressed", String(active));
+    }
+}
+function render() {
+    for(const observer of plotObservers.splice(0))observer.disconnect();
+    clearHover();
+    syncControls();
+    if(state.view === "logit"){
+        answerLabelObserver.disconnect();
+        const heads = usesGoldReference?report.models.map(makeModel):[];
+        const cards = [...heads,el("curve-legend"),makeLogitCard(),makePredictionMap()];
+        if(report.logit_distribution)cards.push(makeLogitJSTrend(report.logit_distribution));
+        el("models").replaceChildren(...cards);
+        return;
+    }
+    const common=globalLimit();const scrollLeft=document.querySelector(".map-scroll")?.scrollLeft??0;
+    const modelSlots=state.alignment==="number"?numberSlots:depthSlots;
+    const models=report.models.map((model,index)=>({
+        index,values:matrix(model),bySlot:new Map([[-1,0],...modelSlots[index].map((slot,layer)=>[slot,layer+1])]),
+    }));
+    const pairs=compareLayerPairs(models);
+    const panels=report.models.map((model,index)=>makeModel(model,index));
+    const legend=el("curve-legend");
+    if(state.overlay){
+        const combined=node("section","card overlay-card");combined.setAttribute("aria-label","重ね合わせ");
+        const help=el("distribution-help").content.cloneNode(true);
+        help.firstElementChild.open=document.querySelector(".distribution-help")?.open??false;
+        combined.append(help,makeMap(models,common,pairs));panels.push(legend,combined);
+    }else{
+        el("models").before(legend);
+        panels.forEach((panel,index)=>panel.append(makeMap([models[index]],common,pairs)));
+    }
+    el("models").replaceChildren(...panels,makeJSTrend([...pairs.values()]));
+    answerLabelObserver.disconnect();
+    document.querySelectorAll(".map").forEach(map=>{
+        layoutAnswerLabels(map);
+        answerLabelObserver.observe(map);
+    });
+    const maps=[...document.querySelectorAll(".map-scroll")];maps.forEach(map=>{map.scrollLeft=scrollLeft;map.addEventListener("scroll",()=>{for(const other of maps)if(other!==map&&other.scrollLeft!==map.scrollLeft)other.scrollLeft=map.scrollLeft;});});
+    for(const [id,active] of [["split-view",!state.overlay],["overlay-view",state.overlay]]){
+        el(id).classList.toggle("active",active);el(id).setAttribute("aria-pressed",String(active));
+    }
+}
+async function loadExamples() {
+    if(report.source?.kind!=="saved-squad")return;
+    let examples=JSON.parse(el("example-catalog").textContent);
+    if(!examples.length && location.protocol!=="file:"){
+        const response=await fetch("/examples.json");
+        if(!response.ok)return;
+        examples=await response.json();
+    }
+    if(examples.length<2)return;
+
+    const current=examples.find(example=>example.id===report.source.sample_id);
+    if(!current)return;
+    const groupPicker=el("example-group");
+    const picker=el("example");
+    const groupFor=example=>example.group??"correct";
+    const matchesGroup=(example,group)=>group===numericQuestionGroup
+        ? /\p{Decimal_Number}/u.test(`${example.question??""} ${example.answer??""}`)
+        : groupFor(example)===group;
+    for(const {value,label} of questionGroups){
+        const count=examples.filter(example=>matchesGroup(example,value)).length;
+        if(count)groupPicker.append(new Option(`${label}（${count}問）`,value));
+    }
+    function updateQuestions(){
+        picker.replaceChildren(new Option("問題を選択",""));
+        for(const {title,question,url} of examples.filter(example=>matchesGroup(example,groupPicker.value))){
+            picker.append(new Option(title?title.replaceAll("_"," ")+" · "+question:question,url));
+        }
+        picker.value=matchesGroup(current,groupPicker.value)?current.url:"";
+    }
+    const selectedGroup=new URLSearchParams(location.search).get("group");
+    groupPicker.value=selectedGroup===numericQuestionGroup && matchesGroup(current,numericQuestionGroup)
+        ? numericQuestionGroup : groupFor(current);
+    updateQuestions();
+    groupPicker.addEventListener("change",updateQuestions);
+    picker.addEventListener("change",()=>{
+        if(!picker.value)return;
+        const url=new URL(picker.value,location.href);
+        if(groupPicker.value===numericQuestionGroup)url.searchParams.set("group",numericQuestionGroup);
+        location.assign(url.href);
+    });
+    el("example-control").classList.remove("hidden");
+}
+function renderContext() {
+    const context=el("context");
+    if(report.context==null){context.textContent="カスタムプロンプト";return;}
+    const chars=Array.from(report.context);
+    const marked=new Set();
+    for(const span of report.gold_spans??[]){
+        for(let i=span.answer_start;i<span.answer_end;i++)marked.add(i);
+    }
+    for(let start=0;start<chars.length;){
+        let end=start+1;
+        const gold=marked.has(start);
+        while(end<chars.length&&marked.has(end)===gold)end++;
+        const text=chars.slice(start,end).join("");
+        context.append(gold?node("mark","",text):document.createTextNode(text));
+        start=end;
+    }
+}
+function init() {
+    if(report.schema!=="layer-relevance-v1"||report.models.length!==2)throw Error("対応していないデータ形式です。");
+    renderContext();el("question").textContent=report.question??"入力全文は「モデルに渡したプロンプト」で確認できます。";
+    el("prompt").textContent=report.prompt;el("answer").textContent=report.answer;el("answer-count").textContent=`${report.answer_ids.length} 回答トークン / ${report.prompt_ids.length} 入力トークン`;
+    if(usesGoldReference){
+        el("answer-source").textContent="正解注釈を固定して比較";
+        el("reference-note").classList.remove("hidden");
+    }
+    const aggregateLabel=report.models[0].sum_relevance?"回答全体の合計（符号付き）":"回答全体の平均（符号付き）";
+    el("target").append(new Option(aggregateLabel,"-1"));report.answer_pieces.forEach((token,index)=>el("target").append(new Option(`${index+1}: ${token}  [ID ${report.answer_ids[index]}]`,String(index))));
+    if(hasLogitLens){
+        const logitButton=el("view-logit");
+        logitButton.disabled=false;
+        logitButton.removeAttribute("title");
+        logitButton.textContent="Logit";
+    }
+    el("view-relevance").addEventListener("click",()=>setView("relevance"));
+    el("view-logit").addEventListener("click",()=>setView("logit"));
+    el("split-view").addEventListener("click",()=>setOverlay(false));
+    el("overlay-view").addEventListener("click",()=>setOverlay(true));
+    el("alignment").addEventListener("change",event=>{state.alignment=event.target.value;render();});
+    el("distribution-metric").addEventListener("change",event=>{state.distributionMetric=event.target.value;render();});
+    el("target").addEventListener("change",event=>{state.target=Number(event.target.value);render();});
+    el("metric").addEventListener("change",event=>{state.metric=event.target.value;render();});
+    el("scale").addEventListener("change",event=>{state.scale=event.target.value;render();});
+    el("zoom").addEventListener("change",event=>{
+        const zoom=event.target.value;
+        state.fitWidth=zoom==="fit";
+        if(!state.fitWidth)document.documentElement.style.setProperty("--cell",`${zoom}px`);
+        render();
+    });
+    el("download").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:"application/json"}));const anchor=node("a");anchor.href=url;anchor.download="layer-relevance-data.json";anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+    render();
+    window.addEventListener("scroll",clearHover,true);
+    loadExamples().catch(error=>console.warn("SQuAD の問題一覧を取得できませんでした。",error));
+}
+try{init();}catch(error){el("error").classList.remove("hidden");el("error").textContent=`表示できませんでした：${error.message}`;throw error;}
+</script>
+</body>
+</html>
